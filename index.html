@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Eskul</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Supabase JS (PENTING! Ini yang hilang) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* Kustomisasi Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c5c5c5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Efek Transisi Sederhana */
+        .page-content {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Kustomisasi Input Form */
+        .form-input {
+            border: 1px solid #D1D5DB; /* gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem 1rem; /* px-4 py-3 */
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #4F46E5; /* indigo-600 */
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <!-- Kontainer Aplikasi Utama -->
+    <div id="app-container" class="flex h-screen bg-gray-100">
+
+        <!-- Sidebar (Navigasi) -->
+        <aside id="sidebar" class="w-64 bg-white shadow-lg flex-shrink-0 transition-all duration-300 -translate-x-full md:translate-x-0">
+            <div class="h-full flex flex-col">
+                <!-- Header Sidebar -->
+                <div class="px-6 py-5 border-b border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <span id="eskul-logo" class="w-10 h-10 bg-indigo-600 text-white flex items-center justify-center rounded-full text-xl font-bold">
+                            <i class="fas fa-shield-alt"></i>
+                        </span>
+                        <div>
+                            <h2 id="eskul-name" class="text-lg font-bold text-gray-800">Nama Eskul</h2>
+                            <span id="user-role-display" class="text-xs text-gray-500">Anggota</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Menu Navigasi -->
+                <nav class="flex-1 py-4 space-y-2 overflow-y-auto">
+                    <a href="#" data-page="dashboard" class="nav-link flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-tachometer-alt w-6 text-center text-gray-500 mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" data-page="jadwal" class="nav-link flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-calendar-alt w-6 text-center text-gray-500 mr-3"></i>
+                        <span>Jadwal Kegiatan</span>
+                    </a>
+                    <a href="#" data-page="absensi" class="nav-link flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-user-check w-6 text-center text-gray-500 mr-3"></i>
+                        <span>Absensi</span>
+                    </a>
+                    <a href="#" data-page="dokumentasi" class="nav-link flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-camera-retro w-6 text-center text-gray-500 mr-3"></i>
+                        <span>Galeri Dokumentasi</span>
+                    </a>
+                    
+                    <!-- Menu Admin (Pengurus) -->
+                    <div id="admin-menu" class="hidden">
+                        <span class="px-6 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</span>
+                        <a href="#" data-page="anggota" class="nav-link flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
+                            <i class="fas fa-users w-6 text-center text-gray-500 mr-3"></i>
+                            <span>Daftar Anggota</span>
+                        </a>
+                        <a href="#" data-page="keuangan" class="nav-link flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
+                            <i class="fas fa-wallet w-6 text-center text-gray-500 mr-3"></i>
+                            <span>Keuangan Eskul</span>
+                        </a>
+                        <a href="#" data-page="pengaturan" class="nav-link flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors">
+                            <i class="fas fa-cog w-6 text-center text-gray-500 mr-3"></i>
+                            <span>Pengaturan</span>
+                        </a>
+                    </div>
+                </nav>
+
+                <!-- Footer Sidebar -->
+                <div class="p-6 border-t border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <img id="user-avatar" src="https://placehold.co/40x40/E2E8F0/A0AEC0?text=U" alt="Avatar" class="w-10 h-10 rounded-full bg-gray-200">
+                        <div>
+                            <h4 id="user-name" class="font-semibold text-gray-800">Memuat...</h4>
+                            <button id="logout-button" class="text-sm text-red-600 hover:underline">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Konten Utama -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header Utama -->
+            <header class="bg-white shadow-sm border-b border-gray-200 z-10">
+                <div class="flex justify-between items-center px-6 py-4">
+                    <!-- Tombol Toggle Sidebar Mobile -->
+                    <button id="mobile-menu-button" class="md:hidden text-gray-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <!-- Judul Halaman -->
+                    <h1 id="page-title" class="text-xl font-semibold text-gray-800">Dashboard</h1>
+                    <!-- Ikon Notifikasi (Contoh) -->
+                    <button class="text-gray-600 hover:text-gray-800">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Area Konten Halaman -->
+            <div id="main-content" class="flex-1 overflow-y-auto p-6 md:p-8 bg-gray-100">
+                <!-- Konten akan dimuat di sini oleh JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Overlay Latar Belakang (untuk mobile sidebar & modal) -->
+    <div id="backdrop-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden"></div>
+
+    <!-- Modal Universal -->
+    <div id="universal-modal" class="fixed inset-0 z-30 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden" style="animation: zoomIn 0.2s ease-out;">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center p-5 border-b border-gray-200">
+                <h3 id="modal-title" class="text-lg font-semibold text-gray-800">Judul Modal</h3>
+                <button id="modal-close-btn" class="text-gray-500 hover:text-gray-800">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <!-- Modal Body -->
+            <div id="modal-body" class="p-6">
+                <!-- Konten modal akan diinjeksi di sini -->
+            </div>
+            <!-- Modal Footer -->
+            <div id="modal-footer" class="px-6 py-4 bg-gray-50 border-t border-gray-200 text-right space-x-3">
+                <button id="modal-cancel-btn" class="py-2 px-5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">Batal</button>
+                <button id="modal-confirm-btn" class="py-2 px-5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">Konfirmasi</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed top-5 right-5 z-50 w-full max-w-xs p-4 rounded-lg shadow-lg text-white transition-all duration-300 translate-x-full" style="opacity: 0;">
+        <span id="toast-message">Pesan notifikasi.</span>
+    </div>
+
+
+    <!-- =================================================================
+    SCRIPT UTAMA APLIKASI
+    ================================================================== -->
+    <script type="module">
+        // --- KONFIGURASI SUPABASE ---
+        // GANTI DENGAN URL DAN KUNCI SUPABASE PROYEK ANDA
+        const YOUR_SUPABASE_URL = "https://xwxvilaspooxqigflnku.supabase.co";
+        const YOUR_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3eHZpbGFzcG9veHFpZ2Zsbmt1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2MTM0ODksImV4cCI6MjA3OTE4OTQ4OX0.x-oSDAFIBYKrnwJjUqWjalcsRUuKqU82wKu-NdXkqn4";
+        // -------------------------
+
+        // Ambil URL dan Kunci Supabase dari variabel global (jika ada) atau gunakan placeholder
+        const SUPABASE_URL = typeof __SUPABASE_URL !== 'undefined' ? __SUPABASE_URL : YOUR_SUPABASE_URL;
+        const SUPABASE_ANON_KEY = typeof __SUPABASE_ANON_KEY !== 'undefined' ? __SUPABASE_ANON_KEY : YOUR_SUPABASE_ANON_KEY;
+
+        // Inisialisasi Klien Supabase
+        let supabase;
+        try {
+            if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes("MASUKKAN_URL") || SUPABASE_ANON_KEY.includes("MASUKKAN_KUNCI")) {
+                throw new Error("Supabase URL atau Kunci Anon tidak ditemukan. Harap atur di dalam kode (sekitar baris 209).");
+            }
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (error) {
+            console.error("Gagal menginisialisasi Supabase:", error.message);
+            alert("Gagal terhubung ke database. " + error.message);
+        }
+
+        /**
+         * EskulApp
+         * Kelas utama untuk mengelola seluruh logika aplikasi.
+         */
+        class EskulApp {
+            constructor() {
+                // State Management
+                this.state = {
+                    currentUser: null,
+                    userProfile: null,
+                    currentPage: 'dashboard',
+                    eskulName: 'Nama Eskul',
+                    jadwal: [],
+                    anggota: [],
+                    absensi: [],
+                    keuangan: {
+                        totalPemasukan: 0,
+                        totalPengeluaran: 0,
+                        saldo: 0,
+                        transaksi: []
+                    },
+                    dokumentasi: [],
+                    aktivitasTerbaru: []
+                };
+
+                // DOM Elements
+                this.dom = {
+                    appContainer: document.getElementById('app-container'),
+                    sidebar: document.getElementById('sidebar'),
+                    mainContent: document.getElementById('main-content'),
+                    pageTitle: document.getElementById('page-title'),
+                    eskulNameDisplay: document.getElementById('eskul-name'),
+                    eskulLogo: document.getElementById('eskul-logo'),
+                    userAvatar: document.getElementById('user-avatar'),
+                    userNameDisplay: document.getElementById('user-name'),
+                    userRoleDisplay: document.getElementById('user-role-display'),
+                    adminMenu: document.getElementById('admin-menu'),
+                    logoutButton: document.getElementById('logout-button'),
+                    mobileMenuButton: document.getElementById('mobile-menu-button'),
+                    backdrop: document.getElementById('backdrop-overlay'),
+                    
+                    // Modal
+                    modal: document.getElementById('universal-modal'),
+                    modalTitle: document.getElementById('modal-title'),
+                    modalBody: document.getElementById('modal-body'),
+                    modalFooter: document.getElementById('modal-footer'),
+                    modalCloseBtn: document.getElementById('modal-close-btn'),
+                    modalConfirmBtn: document.getElementById('modal-confirm-btn'),
+                    modalCancelBtn: document.getElementById('modal-cancel-btn'),
+                    
+                    // Toast
+                    toast: document.getElementById('toast-notification'),
+                    toastMessage: document.getElementById('toast-message'),
+                };
+
+                // Bind modal action callbacks
+                this.onModalConfirm = null;
+                this.onModalCancel = null;
+
+                // Bind toast timeout
+                this.toastTimeout = null;
+
+                this.checkUserSession();
+                this.initEventListeners();
+            }
+
+            // --- 1. INISIALISASI & AUTENTIKASI ---
+
+            /**
+             * Memeriksa sesi pengguna saat aplikasi dimuat.
+             */
+            async checkUserSession() {
+                if (!supabase) return; // Hentikan jika supabase gagal inisialisasi
+
+                try {
+                    const { data: { session }, error } = await supabase.auth.getSession();
+                    if (error) throw error;
+
+                    if (session) {
+                        this.state.currentUser = session.user;
+                        await this.loadUserProfile(session.user.id);
+                        await this.loadDataFromSupabase();
+                        this.startApp();
+                    } else {
+                        // Tidak ada sesi, tampilkan halaman login
+                        this.renderLoginPage();
+                    }
+                } catch (error) {
+                    console.error("Error checking session:", error.message);
+                    this.renderLoginPage("Gagal memuat sesi. Silakan login kembali.");
+                }
+            }
+
+            /**
+             * Memuat profil pengguna (nama, peran) dari tabel 'profiles'.
+             */
+            async loadUserProfile(userId) {
+                try {
+                    const { data, error, status } = await supabase
+                        .from('profiles')
+                        .select(`full_name, role, avatar_url`)
+                        .eq('id', userId)
+                        .single();
+
+                    if (error && status !== 406) throw error;
+
+                    if (data) {
+                        this.state.userProfile = data;
+                    } else {
+                        // Profil belum ada, mungkin pengguna baru
+                        this.state.userProfile = { full_name: 'Pengguna Baru', role: 'Anggota', avatar_url: null };
+                    }
+                } catch (error) {
+                    console.error("Error loading user profile:", error.message);
+                    // Tetap lanjutkan dengan profil default
+                    this.state.userProfile = { full_name: 'Pengguna', role: 'Anggota', avatar_url: null };
+                }
+            }
+
+            // --- FUNGSI PENGAMBILAN DATA ---
+
+            async loadDataFromSupabase() {
+                // Di sini kita akan mengambil data jadwal, anggota, dll dari Supabase
+                await this.fetchEskulName();
+                await this.fetchJadwal(); // Mengambil jadwal dari Supabase
+                
+                // TODO: Ganti data dummy ini dengan fetch dari Supabase
+                await new Promise(resolve => setTimeout(resolve, 300)); // Simulasi loading
+
+                // Data dummy sementara (selain jadwal)
+                this.state.anggota = [
+                    { id: 1, nama: 'Budi Santoso', kelas: 'XI RPL 1', poin: 200 },
+                    { id: 2, nama: 'Siti Aminah', kelas: 'X TJKT 2', poin: 120 },
+                    { id: 3, nama: 'Agus Setiawan', kelas: 'XII MM 1', poin: 150 },
+                ];
+                this.state.absensi = [
+                    { id: 1, nama: 'Budi Santoso', kelas: 'XI RPL 1', tanggal: '2025-11-10', status: 'Hadir', dokumentasi: 'Belum' },
+                    { id: 2, nama: 'Siti Aminah', kelas: 'X TJKT 2', tanggal: '2025-11-10', status: 'Hadir', dokumentasi: 'Belum' },
+                    { id: 3, nama: 'Agus Setiawan', kelas: 'XII MM 1', tanggal: '2025-11-10', status: 'Izin', dokumentasi: 'Surat Dokter' },
+                ];
+                this.state.keuangan = {
+                    totalPemasukan: 500000,
+                    totalPengeluaran: 150000,
+                    saldo: 350000,
+                    transaksi: [
+                        { id: 1, tanggal: '2025-11-01', jenis: 'Pemasukan', keterangan: 'Uang Kas Awal', jumlah: 500000 },
+                        { id: 2, tanggal: '2025-11-05', jenis: 'Pengeluaran', keterangan: 'Beli ATK', jumlah: 50000 },
+                        { id: 3, tanggal: '2025-11-12', jenis: 'Pengeluaran', keterangan: 'Konsumsi Rapat', jumlah: 100000 },
+                    ]
+                };
+                this.state.dokumentasi = [
+                    { id: 1, url: 'https://placehold.co/600x400/6366F1/FFFFFF?text=Latihan+Rutin', caption: 'Latihan Rutin 10 Nov 2025' },
+                    { id: 2, url: 'https://placehold.co/600x400/EC4899/FFFFFF?text=Rapat+Anggota', caption: 'Rapat Anggota 20 Nov 2025' },
+                    { id: 3, url: 'https://placehold.co/600x400/F59E0B/FFFFFF?text=Persiapan+Lomba', caption: 'Persiapan Lomba 17 Nov 2025' },
+                ];
+                this.state.aktivitasTerbaru = [
+                    { id: 1, teks: 'Budi Santoso melakukan absensi.', waktu: '5 menit lalu', ikon: 'fa-check-circle text-green-500' },
+                    { id: 2, teks: 'Jadwal baru "Api Unggun" ditambahkan.', waktu: '1 jam lalu', ikon: 'fa-calendar-alt text-blue-500' },
+                    { id: 3, teks: 'Siti Aminah mengunggah foto baru.', waktu: '2 jam lalu', ikon: 'fa-image text-pink-500' },
+                ];
+            }
+            
+            async fetchEskulName() {
+                try {
+                    const { data, error } = await supabase
+                        .from('settings')
+                        .select('value')
+                        .eq('key', 'eskul_name')
+                        .single();
+                    
+                    if (error && error.code !== 'PGRST116') throw error; // Abaikan error "data tidak ditemukan"
+
+                    if (data) {
+                        this.state.eskulName = data.value;
+                    } else {
+                        // Jika nama eskul belum ada, buat entri default
+                        await this.createInitialSettings();
+                    }
+                } catch (error) {
+                    console.error('Error fetching eskul name:', error.message);
+                    this.showToast('Gagal memuat nama eskul.', 'error');
+                }
+            }
+
+            async createInitialSettings() {
+                try {
+                    const { error } = await supabase
+                        .from('settings')
+                        .insert({ key: 'eskul_name', value: 'Nama Eskul' });
+                    if (error) throw error;
+                    this.state.eskulName = 'Nama Eskul';
+                } catch (error) {
+                    console.error('Error creating initial settings:', error.message);
+                }
+            }
+
+            async updateEskulName(newName) {
+                try {
+                    const { error } = await supabase
+                        .from('settings')
+                        .update({ value: newName })
+                        .eq('key', 'eskul_name');
+                    
+                    if (error) throw error;
+                    this.state.eskulName = newName;
+                    this.updateUIEskulName();
+                    this.showToast('Nama eskul berhasil diperbarui!', 'success');
+                } catch (error) {
+                    console.error('Error updating eskul name:', error.message);
+                    this.showToast('Gagal memperbarui nama eskul.', 'error');
+                }
+            }
+
+            updateUIEskulName() {
+                this.dom.eskulNameDisplay.textContent = this.state.eskulName;
+                const logoText = this.state.eskulName.substring(0, 1).toUpperCase();
+                if (!this.state.eskulName.includes('Nama Eskul')) {
+                    this.dom.eskulLogo.innerHTML = logoText;
+                }
+            }
+
+            // --- FUNGSI CRUD JADWAL ---
+
+            async fetchJadwal() {
+                try {
+                    const { data, error } = await supabase
+                        .from('jadwal')
+                        .select('*')
+                        .order('tanggal', { ascending: true });
+
+                    if (error) throw error;
+                    this.state.jadwal = data || [];
+                    console.log("Jadwal loaded:", this.state.jadwal);
+                } catch (error) {
+                    console.error('Error fetching jadwal:', error.message);
+                    this.showToast('Gagal memuat jadwal.', 'error');
+                }
+            }
+
+            async addJadwal(kegiatanData) {
+                try {
+                    const { data, error } = await supabase
+                        .from('jadwal')
+                        .insert([kegiatanData])
+                        .select();
+                    
+                    if (error) throw error;
+
+                    this.showToast('Jadwal baru berhasil ditambahkan!', 'success');
+                    await this.fetchJadwal(); // Ambil ulang data
+                    this.renderPage('jadwal'); // Render ulang halaman jadwal
+                    this.hideModal(); // Tutup modal setelah sukses
+                } catch (error) {
+                    console.error('Error adding jadwal:', error.message);
+                    this.showToast(`Gagal menambahkan jadwal: ${error.message}`, 'error');
+                }
+            }
+
+            async deleteJadwal(jadwalId) {
+                try {
+                    const { error } = await supabase
+                        .from('jadwal')
+                        .delete()
+                        .eq('id', jadwalId);
+                    
+                    if (error) throw error;
+
+                    this.showToast('Jadwal berhasil dihapus.', 'success');
+                    await this.fetchJadwal(); // Ambil ulang data
+                    this.renderPage('jadwal'); // Render ulang halaman jadwal
+                    this.hideModal(); // Tutup modal setelah sukses
+                } catch (error) {
+                    console.error('Error deleting jadwal:', error.message);
+                    this.showToast(`Gagal menghapus jadwal: ${error.message}`, 'error');
+                }
+            }
+
+            // --- 2. RENDER HALAMAN UTAMA & LOGIN ---
+
+            /**
+             * Memulai aplikasi setelah login berhasil.
+             */
+            startApp() {
+                // Tampilkan UI utama
+                this.dom.appContainer.classList.remove('hidden');
+
+                // Update UI dengan data pengguna
+                this.dom.userNameDisplay.textContent = this.state.userProfile.full_name || 'Tanpa Nama';
+                this.dom.userRoleDisplay.textContent = this.state.userProfile.role || 'Anggota';
+                if (this.state.userProfile.avatar_url) {
+                    this.dom.userAvatar.src = this.state.userProfile.avatar_url;
+                }
+
+                // Tampilkan menu admin jika peran 'Pengurus'
+                if (this.state.userProfile.role === 'Pengurus') {
+                    this.dom.adminMenu.classList.remove('hidden');
+                }
+
+                // Update nama Eskul
+                this.updateUIEskulName();
+
+                // Muat halaman default (Dashboard)
+                this.navigateTo('dashboard');
+            }
+
+            /**
+             * Merender halaman login.
+             */
+            renderLoginPage(errorMessage = '') {
+                // Sembunyikan app container utama
+                this.dom.appContainer.classList.add('hidden');
+                
+                // Hapus halaman login lama jika ada
+                const oldLogin = document.getElementById('login-page');
+                if (oldLogin) oldLogin.remove();
+
+                // Buat halaman login baru
+                const loginPage = document.createElement('div');
+                loginPage.id = 'login-page';
+                loginPage.className = 'flex items-center justify-center min-h-screen bg-gray-100';
+                loginPage.innerHTML = `
+                    <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg">
+                        <div class="flex justify-center">
+                            <span class="w-16 h-16 bg-indigo-600 text-white flex items-center justify-center rounded-full text-4xl font-bold">
+                                <i class="fas fa-shield-alt"></i>
+                            </span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-center text-gray-900">Login Manajemen Eskul</h2>
+                        <form id="login-form" class="space-y-4">
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                                <input id="email" name="email" type="email" autocomplete="email" required
+                                    class="form-input w-full mt-1" placeholder="email@contoh.com">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                                <input id="password" name="password" type="password" autocomplete="current-password" required
+                                    class="form-input w-full mt-1" placeholder="••••••••">
+                            </div>
+                            <div id="login-error" class="text-sm text-red-600 ${errorMessage ? '' : 'hidden'}">
+                                ${errorMessage}
+                            </div>
+                            <button type="submit"
+                                class="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold">
+                                Login
+                            </button>
+                        </form>
+                        <p class="text-sm text-center text-gray-600">
+                            Belum punya akun? <a href="#" id="show-register" class="font-medium text-indigo-600 hover:underline">Daftar di sini</a>
+                        </p>
+                    </div>
+                `;
+                document.body.appendChild(loginPage);
+
+                // Tambahkan event listener untuk form login
+                const loginForm = document.getElementById('login-form');
+                loginForm.addEventListener('submit', this.handleLogin.bind(this));
+
+                // Tambahkan event listener untuk tombol register
+                document.getElementById('show-register').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.renderRegisterPage();
+                });
+            }
+            
+            /**
+             * Merender halaman registrasi.
+             */
+            renderRegisterPage(errorMessage = '') {
+                // Hapus halaman login
+                document.getElementById('login-page')?.remove();
+
+                // Buat halaman register
+                const registerPage = document.createElement('div');
+                registerPage.id = 'register-page';
+                registerPage.className = 'flex items-center justify-center min-h-screen bg-gray-100';
+                registerPage.innerHTML = `
+                    <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold text-center text-gray-900">Daftar Akun Baru</h2>
+                        <form id="register-form" class="space-y-4">
+                            <div>
+                                <label for="full_name" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                                <input id="full_name" name="full_name" type="text" required class="form-input w-full mt-1" placeholder="Nama Anda">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                                <input id="email" name="email" type="email" autocomplete="email" required class="form-input w-full mt-1" placeholder="email@contoh.com">
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                                <input id="password" name="password" type="password" required class="form-input w-full mt-1" placeholder="Minimal 6 karakter">
+                            </div>
+                            <div id="register-error" class="text-sm text-red-600 ${errorMessage ? '' : 'hidden'}">
+                                ${errorMessage}
+                            </div>
+                            <button type="submit" class="w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold">
+                                Daftar
+                            </button>
+                        </form>
+                        <p class="text-sm text-center text-gray-600">
+                            Sudah punya akun? <a href="#" id="show-login" class="font-medium text-indigo-600 hover:underline">Login di sini</a>
+                        </p>
+                    </div>
+                `;
+                document.body.appendChild(registerPage);
+
+                // Tambahkan event listener
+                document.getElementById('register-form').addEventListener('submit', this.handleRegister.bind(this));
+                document.getElementById('show-login').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.getElementById('register-page')?.remove();
+                    this.renderLoginPage();
+                });
+            }
+
+
+            // --- 3. EVENT LISTENERS ---
+
+            /**
+             * Inisialisasi semua event listener utama.
+             */
+            initEventListeners() {
+                // Navigasi
+                this.dom.sidebar.addEventListener('click', (e) => {
+                    const link = e.target.closest('.nav-link');
+                    if (link && link.dataset.page) {
+                        e.preventDefault();
+                        this.navigateTo(link.dataset.page);
+                        // Tutup sidebar di mobile
+                        if (window.innerWidth < 768) {
+                            this.toggleSidebar();
+                        }
+                    }
+                });
+
+                // Logout
+                this.dom.logoutButton.addEventListener('click', this.handleLogout.bind(this));
+
+                // Mobile Sidebar
+                this.dom.mobileMenuButton.addEventListener('click', this.toggleSidebar.bind(this));
+                this.dom.backdrop.addEventListener('click', this.toggleSidebar.bind(this));
+
+                // Modal
+                this.dom.modalCloseBtn.addEventListener('click', this.hideModal.bind(this));
+                this.dom.modalCancelBtn.addEventListener('click', () => {
+                    if (this.onModalCancel) this.onModalCancel();
+                    this.hideModal();
+                });
+                this.dom.modalConfirmBtn.addEventListener('click', () => {
+                    if (this.onModalConfirm) this.onModalConfirm();
+                    // Jangan hide modal di sini, biarkan callback-nya yang menentukan
+                });
+            }
+            
+            /**
+             * Menangani navigasi antar halaman.
+             */
+            navigateTo(page) {
+                this.state.currentPage = page;
+
+                // Update judul halaman
+                const pageTitles = {
+                    dashboard: 'Dashboard',
+                    jadwal: 'Jadwal Kegiatan',
+                    absensi: 'Absensi',
+                    dokumentasi: 'Galeri Dokumentasi',
+                    anggota: 'Daftar Anggota',
+                    keuangan: 'Keuangan Eskul',
+                    pengaturan: 'Pengaturan'
+                };
+                this.dom.pageTitle.textContent = pageTitles[page] || 'Halaman Tidak Ditemukan';
+
+                // Update link aktif
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    if (link.dataset.page === page) {
+                        link.classList.add('bg-gray-100', 'text-indigo-600');
+                    } else {
+                        link.classList.remove('bg-gray-100', 'text-indigo-600');
+                    }
+                });
+                
+                // Render konten halaman
+                this.renderPage(page);
+            }
+
+
+            /**
+             * Merender konten halaman yang sesuai.
+             */
+            renderPage(page) {
+                const content = this.dom.mainContent;
+                content.innerHTML = ''; // Kosongkan konten
+                content.className = 'flex-1 overflow-y-auto p-6 md:p-8 bg-gray-100 page-content'; // Reset kelas
+                
+                const isAdmin = this.state.userProfile && this.state.userProfile.role === 'Pengurus';
+                
+                // Halaman khusus admin
+                const adminPages = ['anggota', 'keuangan', 'pengaturan'];
+                if (adminPages.includes(page) && !isAdmin) {
+                    page = 'dashboard'; // Redirect ke dashboard jika bukan admin
+                    this.navigateTo('dashboard');
+                    this.showToast('Anda tidak memiliki akses ke halaman ini.', 'warning');
+                    return;
+                }
+
+                switch (page) {
+                    case 'dashboard':
+                        content.innerHTML = this.renderDashboard();
+                        break;
+                    case 'jadwal':
+                        content.innerHTML = this.renderJadwal();
+                        this.addJadwalEventListeners(); // Tambahkan event listener khusus jadwal
+                        break;
+                    case 'absensi':
+                        content.innerHTML = this.renderAbsensi();
+                        this.addAbsensiEventListeners();
+                        break;
+                    case 'dokumentasi':
+                        content.innerHTML = this.renderDokumentasi();
+                        break;
+                    case 'anggota':
+                        if(isAdmin) content.innerHTML = this.renderAnggota();
+                        break;
+                    case 'keuangan':
+                        if(isAdmin) content.innerHTML = this.renderKeuangan();
+                        break;
+                    case 'pengaturan':
+                        if(isAdmin) content.innerHTML = this.renderPengaturan();
+                        this.addPengaturanEventListeners();
+                        break;
+                    default:
+                        content.innerHTML = `<h2 class="text-xl font-semibold">Halaman Tidak Ditemukan</h2>`;
+                }
+                
+                // Panggil ulang untuk memastikan elemen dinamis (seperti tombol admin) diperbarui
+                this.updateAdminControls();
+            }
+            
+            /**
+             * Memperbarui tampilan tombol/kontrol khusus admin.
+             */
+            updateAdminControls() {
+                const isAdmin = this.state.userProfile && this.state.userProfile.role === 'Pengurus';
+                document.querySelectorAll('.admin-control').forEach(el => {
+                    if (isAdmin) {
+                        el.classList.remove('hidden');
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                });
+            }
+
+
+            // --- 4. LOGIKA AUTENTIKASI (LOGIN/REGISTER/LOGOUT) ---
+
+            async handleLogin(e) {
+                e.preventDefault();
+                const form = e.target;
+                const email = form.email.value;
+                const password = form.password.value;
+                const errorDiv = document.getElementById('login-error');
+
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+
+                    // Sukses, hapus halaman login
+                    document.getElementById('login-page')?.remove();
+                    // Muat ulang data & mulai aplikasi
+                    this.checkUserSession();
+
+                } catch (error) {
+                    console.error("Login error:", error.message);
+                    errorDiv.textContent = 'Login Gagal: ' + error.message;
+                    errorDiv.classList.remove('hidden');
+                }
+            }
+            
+            async handleRegister(e) {
+                e.preventDefault();
+                const form = e.target;
+                const email = form.email.value;
+                const password = form.password.value;
+                const fullName = form.full_name.value;
+                const errorDiv = document.getElementById('register-error');
+                
+                try {
+                    // 1. Buat user di Supabase Auth
+                    const { data: authData, error: authError } = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                        options: {
+                            data: {
+                                full_name: fullName // Kirim nama lengkap ke metadata
+                            }
+                        }
+                    });
+                    if (authError) throw authError;
+
+                    // 2. Buat profil di tabel 'profiles'
+                    // SUDAH TIDAK DIPERLUKAN LAGI! Ini akan ditangani oleh TRIGGER di database.
+                    /*
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .insert({
+                            id: authData.user.id,
+                            full_name: fullName,
+                            role: 'Anggota' // Role default
+                        });
+                    
+                    if (profileError) { 
+                        throw profileError;
+                    }
+                    */
+                    
+                    // Sukses
+                    document.getElementById('register-page').remove();
+                    // Tampilkan halaman login dengan pesan sukses
+                    this.renderLoginPage('Registrasi berhasil! Silakan login.');
+
+                } catch (error) {
+                    console.error("Register error:", error.message);
+                    // Tampilkan error umum
+                    errorDiv.textContent = 'Registrasi Gagal: ' + error.message;
+                    errorDiv.classList.remove('hidden');
+                }
+            }
+
+            async handleLogout() {
+                try {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) throw error;
+
+                    // Reset state
+                    this.state = { ...this.state, currentUser: null, userProfile: null, currentPage: 'dashboard' };
+                    // Sembunyikan UI utama
+                    this.dom.appContainer.classList.add('hidden');
+                    // Tampilkan halaman login
+                    this.renderLoginPage();
+
+                } catch (error) {
+                    console.error("Logout error:", error.message);
+                    this.showToast("Gagal logout: " + error.message, 'error');
+                }
+            }
+
+
+            // --- 5. RENDER KONTEN HALAMAN ---
+
+            renderDashboard() {
+                const isAdmin = this.state.userProfile && this.state.userProfile.role === 'Pengurus';
+                const totalAnggota = this.state.anggota.length;
+                const saldoKas = this.state.keuangan.saldo;
+                const kegiatanTerdekat = this.state.jadwal
+                    .filter(j => new Date(j.tanggal) >= new Date())
+                    .sort((a,b) => new Date(a.tanggal) - new Date(b.tanggal))[0];
+
+                return `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <!-- Stat Box 1: Anggota -->
+                        <div class="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
+                            <i class="fas fa-users text-3xl text-blue-500"></i>
+                            <div>
+                                <span class="text-sm text-gray-500">Total Anggota</span>
+                                <p class="text-2xl font-bold text-gray-800">${totalAnggota}</p>
+                            </div>
+                        </div>
+                        <!-- Stat Box 2: Saldo Kas -->
+                        <div class="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
+                            <i class="fas fa-wallet text-3xl text-green-500"></i>
+                            <div>
+                                <span class="text-sm text-gray-500">Saldo Kas Eskul</span>
+                                <p class="text-2xl font-bold text-gray-800">Rp ${saldoKas.toLocaleString('id-ID')}</p>
+                            </div>
+                        </div>
+                        <!-- Stat Box 3: Kegiatan Terdekat -->
+                        <div class="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4">
+                            <i class="fas fa-calendar-check text-3xl text-purple-500"></i>
+                            <div>
+                                <span class="text-sm text-gray-500">Kegiatan Terdekat</span>
+                                <p class="text-xl font-bold text-gray-800">${kegiatanTerdekat ? kegiatanTerdekat.kegiatan : 'Belum Ada'}</p>
+                                <span class="text-sm text-gray-600">${kegiatanTerdekat ? new Date(kegiatanTerdekat.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }) : '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Card: Jadwal Mendatang -->
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Jadwal Mendatang</h3>
+                            <ul class="space-y-3">
+                                ${this.state.jadwal
+                                    .filter(j => new Date(j.tanggal) >= new Date())
+                                    .slice(0, 4) // Ambil 4 terdekat
+                                    .map(item => `
+                                    <li class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 flex-shrink-0 bg-indigo-100 text-indigo-600 rounded-lg flex flex-col items-center justify-center">
+                                            <span class="text-xs font-bold">${item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { month: 'short' }) : 'N/A'}</span>
+                                            <span class="text-base font-bold">${item.tanggal ? new Date(item.tanggal).getDate() : '?'}</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800">${item.kegiatan}</p>
+                                            <p class="text-sm text-gray-600">${item.waktu} di ${item.tempat}</p>
+                                        </div>
+                                    </li>
+                                `).join('') || '<p class="text-gray-500">Tidak ada jadwal mendatang.</p>'}
+                            </ul>
+                        </div>
+
+                        <!-- Card: Aktivitas Terbaru -->
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Aktivitas Terbaru</h3>
+                            <ul class="space-y-4">
+                                ${this.state.aktivitasTerbaru.slice(0, 4).map(item => `
+                                    <li class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 flex-shrink-0 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <i class="fas ${item.ikon} text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-800">${item.teks}</p>
+                                            <p class="text-xs text-gray-500">${item.waktu}</p>
+                                        </div>
+                                    </li>
+                                `).join('') || '<p class="text-gray-500">Tidak ada aktivitas terbaru.</p>'}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+
+            renderJadwal() {
+                const isAdmin = this.state.userProfile && this.state.userProfile.role === 'Pengurus';
+                return `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Jadwal Kegiatan</h2>
+                        <button id="btn-tambah-jadwal" class="${isAdmin ? '' : 'hidden'} py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i> Tambah Kegiatan
+                        </button>
+                    </div>
+
+                    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kegiatan</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu & Tempat</th>
+                                    <th scope="col" class="relative px-6 py-3 ${isAdmin ? '' : 'hidden'}">
+                                        <span class="sr-only">Aksi</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${this.state.jadwal.map(item => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="text-sm font-medium text-gray-900">${item.tanggal ? new Date(item.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Invalid Date'}</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="text-sm text-gray-800">${item.kegiatan}</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="block text-sm text-gray-600">${item.tempat}</span>
+                                            <span class="block text-sm text-gray-500">${item.waktu}</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${isAdmin ? '' : 'hidden'}">
+                                            <button class="text-indigo-600 hover:text-indigo-900 mr-3" disabled title="Fitur edit segera hadir"><i class="fas fa-edit"></i></button>
+                                            <button class="btn-hapus-jadwal text-red-600 hover:text-red-900" data-id="${item.id}" data-kegiatan="${item.kegiatan}"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                                
+                                ${this.state.jadwal.length === 0 ? `
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                                            Belum ada jadwal kegiatan.
+                                        </td>
+                                    </tr>
+                                ` : ''}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            addJadwalEventListeners() {
+                // Event listener untuk tombol 'Tambah Kegiatan'
+                const btnTambah = document.getElementById('btn-tambah-jadwal');
+                if (btnTambah) {
+                    btnTambah.addEventListener('click', () => {
+                        this.showModalTambahJadwal();
+                    });
+                }
+
+                // Event listener untuk semua tombol 'Hapus'
+                document.querySelectorAll('.btn-hapus-jadwal').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.currentTarget.dataset.id;
+                        const kegiatan = e.currentTarget.dataset.kegiatan;
+                        this.showModalHapusJadwal(id, kegiatan);
+                    });
+                });
+            }
+
+            showModalTambahJadwal() {
+                const modalBody = `
+                    <form id="form-tambah-jadwal" class="space-y-4">
+                        <div>
+                            <label for="jadwal-kegiatan" class="block text-sm font-medium text-gray-700 mb-1">Nama Kegiatan</label>
+                            <input type="text" id="jadwal-kegiatan" class="form-input w-full" required>
+                        </div>
+                        <div>
+                            <label for="jadwal-tanggal" class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                            <input type="date" id="jadwal-tanggal" class="form-input w-full" required>
+                        </div>
+                        <div>
+                            <label for="jadwal-waktu" class="block text-sm font-medium text-gray-700 mb-1">Waktu</label>
+                            <input type="text" id="jadwal-waktu" class="form-input w-full" placeholder="Contoh: 15:30 - 17:00" required>
+                        </div>
+                        <div>
+                            <label for="jadwal-tempat" class="block text-sm font-medium text-gray-700 mb-1">Tempat</label>
+                            <input type="text" id="jadwal-tempat" class="form-input w-full" placeholder="Contoh: Lapangan Utama" required>
+                        </div>
+                    </form>
+                `;
+
+                this.showModal('Tambah Kegiatan Baru', modalBody, 'Simpan', 'Batal', () => {
+                    // onConfirm callback
+                    const kegiatan = document.getElementById('jadwal-kegiatan').value;
+                    const tanggal = document.getElementById('jadwal-tanggal').value;
+                    const waktu = document.getElementById('jadwal-waktu').value;
+                    const tempat = document.getElementById('jadwal-tempat').value;
+
+                    if (kegiatan && tanggal && waktu && tempat) {
+                        const kegiatanData = {
+                            kegiatan,
+                            tanggal,
+                            waktu,
+                            tempat
+                        };
+                        this.addJadwal(kegiatanData);
+                        // Modal ditutup di dalam addJadwal() jika sukses
+                    } else {
+                        this.showToast('Harap isi semua kolom.', 'warning');
+                    }
+                });
+            }
+
+            showModalHapusJadwal(id, kegiatan) {
+                const modalBody = `<p>Apakah Anda yakin ingin menghapus jadwal <strong>"${kegiatan}"</strong>? Tindakan ini tidak dapat dibatalkan.</p>`;
+                
+                this.showModal('Konfirmasi Hapus', modalBody, 'Hapus', 'Batal', () => {
+                    // onConfirm callback
+                    this.deleteJadwal(id);
+                    // Modal ditutup di dalam deleteJadwal() jika sukses
+                });
+            }
+
+            renderAbsensi() {
+                const isAdmin = this.state.userProfile && this.state.userProfile.role === 'Pengurus';
+                // Tentukan kegiatan hari ini
+                const hariIni = new Date().toISOString().split('T')[0];
+                const kegiatanHariIni = this.state.jadwal.find(j => j.tanggal === hariIni);
+                
+                return `
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Kolom Kiri: Form Absensi -->
+                        <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md h-fit">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Form Absensi Hari Ini</h3>
+                            ${kegiatanHariIni ? `
+                                <div class="mb-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                                    <p class="font-semibold text-indigo-800">Kegiatan: ${kegiatanHariIni.kegiatan}</p>
+                                    <p class="text-sm text-indigo-700">${kegiatanHariIni.waktu} di ${kegiatanHariIni.tempat}</p>
+                                </div>
+                                <form id="form-absensi" class="space-y-4">
+                                    <input type="hidden" id="absensi-kegiatan-id" value="${kegiatanHariIni.id}">
+                                    <div>
+                                        <label for="absensi-status" class="block text-sm font-medium text-gray-700 mb-1">Status Kehadiran</label>
+                                        <select id="absensi-status" class="form-input w-full">
+                                            <option value="Hadir">Hadir</option>
+                                            <option value="Izin">Izin</option>
+                                            <option value="Sakit">Sakit</option>
+                                            <option value="Alpha">Alpha</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="absensi-keterangan" class="block text-sm font-medium text-gray-700 mb-1">Keterangan (jika Izin/Sakit)</label>
+                                        <input type="text" id="absensi-keterangan" class="form-input w-full" placeholder="Contoh: Surat dokter">
+                                    </div>
+                                    <button type="submit" class="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                                        Kirim Absensi
+                                    </button>
+                                </form>
+                            ` : `
+                                <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                    <p class="font-semibold text-yellow-800">Tidak Ada Kegiatan</p>
+                                    <p class="text-sm text-yellow-700">Tidak ada kegiatan yang dijadwalkan untuk hari ini.</p>
+                                </div>
+                            `}
+                        </div>
+                        
+                        <!-- Kolom Kanan: Rekap Absensi (Hanya Admin) -->
+                        <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md ${isAdmin ? '' : 'hidden'}">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Rekap Absensi (10 November 2025)</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${this.state.absensi.map(item => `
+                                            <tr>
+                                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.nama}</td>
+                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${item.kelas}</td>
+                                                <td class="px-4 py-3 whitespace-nowrap">
+                                                    <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                        ${item.status === 'Hadir' ? 'bg-green-100 text-green-800' : 
+                                                         (item.status === 'Izin' || item.status === 'Sakit' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800')}">
+                                                        ${item.status}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${item.dokumentasi || '-'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            addAbsensiEventListeners() {
+                const form = document.getElementById('form-absensi');
+                if (form) {
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        // TODO: Kirim data absensi ke Supabase
+                        console.log('Absensi dikirim');
+                        this.showToast('Absensi berhasil dicatat!', 'success');
+                        form.reset();
+                    });
+                }
+            }
+
+            renderDokumentasi() {
+                const isAdmin = this.state.userProfile && this.state.userProfile.role === 'Pengurus';
+                return `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Galeri Dokumentasi</h2>
+                        <button class="${isAdmin ? '' : 'hidden'} py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-upload mr-2"></i> Upload Foto
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${this.state.dokumentasi.map(item => `
+                            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                                <img src="${item.url}" alt="${item.caption}" class="w-full h-48 object-cover">
+                                <div class="p-4">
+                                    <p class="text-sm text-gray-700">${item.caption}</p>
+                                    <button class="${isAdmin ? '' : 'hidden'} text-xs text-red-500 hover:underline mt-2">Hapus</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        ${this.state.dokumentasi.length === 0 ? `
+                            <p class="text-gray-500">Belum ada dokumentasi.</p>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            renderAnggota() {
+                // Halaman ini hanya bisa diakses admin, jadi tidak perlu cek role di sini
+                return `
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Daftar Anggota</h2>
+                        <button class="py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                            <i class="fas fa-user-plus mr-2"></i> Tambah Anggota
+                        </button>
+                    </div>
+
+                    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Poin Keaktifan</th>
+                                    <th class="relative px-6 py-3"><span class="sr-only">Aksi</span></th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${this.state.anggota.map(item => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.nama}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${item.kelas}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${item.poin}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-indigo-600 hover:text-indigo-900 mr-3"><i class="fas fa-edit"></i></button>
+                                            <button class="text-red-600 hover:text-red-900"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            renderKeuangan() {
+                const { totalPemasukan, totalPengeluaran, saldo, transaksi } = this.state.keuangan;
+                return `
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Keuangan Eskul</h2>
+                    
+                    <!-- Ringkasan Keuangan -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <span class="text-sm text-green-600">Total Pemasukan</span>
+                            <p class="text-2xl font-bold text-gray-800">Rp ${totalPemasukan.toLocaleString('id-ID')}</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <span class="text-sm text-red-600">Total Pengeluaran</span>
+                            <p class="text-2xl font-bold text-gray-800">Rp ${totalPengeluaran.toLocaleString('id-ID')}</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <span class="text-sm text-blue-600">Saldo Akhir</span>
+                            <p class="text-2xl font-bold text-gray-800">Rp ${saldo.toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div class="flex space-x-4 mb-6">
+                        <button class="py-2 px-5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i> Pemasukan
+                        </button>
+                        <button class="py-2 px-5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-minus mr-2"></i> Pengeluaran
+                        </button>
+                    </div>
+
+                    <!-- Riwayat Transaksi -->
+                    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+                        <h3 class="text-lg font-semibold text-gray-800 p-5 border-b">Riwayat Transaksi</h3>
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jenis</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Keterangan</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${transaksi.map(item => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${item.tanggal}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="font-medium ${item.jenis === 'Pemasukan' ? 'text-green-600' : 'text-red-600'}">
+                                                ${item.jenis}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">${item.keterangan}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            Rp ${item.jumlah.toLocaleString('id-ID')}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            renderPengaturan() {
+                return `
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Pengaturan Eskul</h2>
+                    <div class="bg-white p-6 rounded-lg shadow-md max-w-lg">
+                        <form id="form-pengaturan" class="space-y-4">
+                            <div>
+                                <label for="setting-eskul-name" class="block text-sm font-medium text-gray-700 mb-1">Nama Eskul</label>
+
+                                <input type="text" id="setting-eskul-name" class="form-input w-full" value="${this.state.eskulName}">
+                            </div>
+                            <button type="submit" class="py-2 px-5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                                Simpan Perubahan
+                            </button>
+                        </form>
+                    </div>
+                `;
+            }
+            
+            addPengaturanEventListeners() {
+                const form = document.getElementById('form-pengaturan');
+                if (form) {
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const newName = document.getElementById('setting-eskul-name').value;
+                        if (newName && newName !== this.state.eskulName) {
+                            this.updateEskulName(newName);
+                        }
+                    });
+                }
+            }
+
+
+            // --- 6. UTILITAS (Sidebar, Modal, Toast) ---
+
+            /**
+             * Menampilkan atau menyembunyikan sidebar (untuk mobile).
+             */
+            toggleSidebar() {
+                this.dom.sidebar.classList.toggle('-translate-x-full');
+                this.dom.backdrop.classList.toggle('hidden');
+            }
+
+            /**
+             * Menampilkan modal universal.
+             */
+            showModal(title, bodyHtml, confirmText = 'OK', cancelText = 'Batal', onConfirm, onCancel) {
+                this.dom.modalTitle.textContent = title;
+                this.dom.modalBody.innerHTML = bodyHtml;
+                this.dom.modalConfirmBtn.textContent = confirmText;
+                this.dom.modalCancelBtn.textContent = cancelText;
+
+                this.onModalConfirm = onConfirm;
+                this.onModalCancel = onCancel;
+
+                this.dom.modal.classList.add('flex');
+                this.dom.modal.classList.remove('hidden');
+                this.dom.backdrop.classList.remove('hidden');
+            }
+
+            /**
+             * Menyembunyikan modal universal.
+             */
+            hideModal() {
+                this.dom.modal.classList.add('hidden');
+                this.dom.modal.classList.remove('flex');
+                this.dom.backdrop.classList.add('hidden');
+                // Reset callbacks
+                this.onModalConfirm = null;
+                this.onModalCancel = null;
+            }
+            
+            /**
+             * Menampilkan notifikasi toast.
+             * type: 'success' (hijau), 'error' (merah), 'warning' (kuning), 'info' (biru)
+             */
+            showToast(message, type = 'info') {
+                if (this.toastTimeout) clearTimeout(this.toastTimeout);
+                
+                this.dom.toastMessage.textContent = message;
+                
+                // Hapus kelas warna sebelumnya
+                this.dom.toast.classList.remove('bg-green-600', 'bg-red-600', 'bg-yellow-500', 'bg-blue-600');
+                
+                // Tambah kelas warna baru
+                switch (type) {
+                    case 'success':
+                        this.dom.toast.classList.add('bg-green-600');
+                        break;
+                    case 'error':
+                        this.dom.toast.classList.add('bg-red-600');
+                        break;
+                    case 'warning':
+                        this.dom.toast.classList.add('bg-yellow-500');
+                        break;
+                    case 'info':
+                    default:
+                        this.dom.toast.classList.add('bg-blue-600');
+                        break;
+                }
+                
+                // Tampilkan toast
+                this.dom.toast.style.opacity = '1';
+                this.dom.toast.style.transform = 'translateX(0)';
+                
+                // Sembunyikan setelah 3 detik
+                this.toastTimeout = setTimeout(() => {
+                    this.dom.toast.style.opacity = '0';
+                    this.dom.toast.style.transform = 'translateX(100%)';
+                }, 3000);
+            }
+        }
+
+        // --- Jalankan Aplikasi ---
+        // Pastikan DOM sudah siap
+        document.addEventListener('DOMContentLoaded', () => {
+            if (SUPABASE_URL && SUPABASE_ANON_KEY && typeof supabase !== 'undefined' && supabase) {
+                const app = new EskulApp();
+                window.app = app; // Untuk debugging (opsional)
+            } else {
+                document.body.innerHTML = `<div class="p-8 text-center text-red-600">
+                    <h1>Error Konfigurasi</h1>
+                    <p>Supabase URL atau Kunci Anon tidak tersedia, atau Supabase gagal dimuat. Aplikasi tidak dapat dimuat.</p>
+                </div>`;
+            }
+        });
+    </script>
+
+</body>
+</html>
