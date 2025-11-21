@@ -597,6 +597,10 @@
                                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                                 <input id="password" name="password" type="password" required class="form-input w-full mt-1" placeholder="Minimal 6 karakter">
                             </div>
+                            <div>
+                                <label for="secret_code" class="block text-sm font-medium text-gray-700">Kode Rahasia (Opsional)</label>
+                                <input id="secret_code" name="secret_code" type="password" class="form-input w-full mt-1" placeholder="Hanya untuk Pengurus">
+                            </div>
                             <div id="register-error" class="text-sm text-red-600 ${errorMessage ? '' : 'hidden'}">
                                 ${errorMessage}
                             </div>
@@ -789,6 +793,7 @@
                 const email = form.email.value;
                 const password = form.password.value;
                 const fullName = form.full_name.value;
+                const secretCode = form.secret_code.value; // Ambil nilai kode rahasia
                 const errorDiv = document.getElementById('register-error');
                 
                 try {
@@ -798,7 +803,8 @@
                         password: password,
                         options: {
                             data: {
-                                full_name: fullName // Kirim nama lengkap ke metadata
+                                full_name: fullName, // Kirim nama lengkap ke metadata
+                                secret_code: secretCode // Kirim kode rahasia ke metadata
                             }
                         }
                     });
